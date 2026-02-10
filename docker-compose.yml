@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: perfume_advisor
+    ports:
+      - "8501:7860"
+    env_file:
+      - .env
+    volumes:
+      - ./chroma_db_v3:/app/chroma_db_v3
+      - ./logs:/app/logs
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G

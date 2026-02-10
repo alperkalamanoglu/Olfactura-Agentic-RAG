@@ -1,0 +1,36 @@
+# Security and Environment Variables
+.env
+__pycache__/
+
+# Python specific
+*.pyc
+*.pyo
+*.pyd
+
+# Testing
+.pytest_cache/
+
+# User Private Logs & Data
+logs/
+*.log
+feedback_logs.jsonl
+agent_activity_logs/
+user_feedbacks/
+
+# Raw Scraped Data Sources (DO NOT UPLOAD)
+*.csv
+*scraper*
+data.json
+
+# Local Scratch, Backups, and Tmp (DO NOT UPLOAD)
+scratch/
+tmp/
+portfolio_export/
+portfolio_builder.py
+tmp_fix.py
+streamlit_app_copy.py
+benchmark_rerankers.py
+test_*.py
+
+# (We upload chroma_db because that is the embedded database required to run)
+!chroma_db/
