@@ -1,0 +1,908 @@
+[
+  {
+    "id": "season_01",
+    "category": "Season + Gender",
+    "question": "Recommend a fresh summer perfume for men",
+    "ground_truth": [
+      "Chrome Sport by Azzaro",
+      "Man Eau Fraiche by Versace",
+      "Light Blue Eau Intense Pour Homme by Dolce&Gabbana",
+      "Aqva Amara by Bvlgari",
+      "Chrome Aqua by Azzaro",
+      "Allure Homme Sport Cologne by Chanel",
+      "L'Eau d'Issey Pour Homme by Issey Miyake",
+      "Classica Men by Acqua dell Elba",
+      "CK Everyone Eau de Toilette by Calvin Klein",
+      "Man Extreme by Bvlgari"
+    ],
+    "ground_truth_short": [
+      "Chrome Sport",
+      "Man Eau Fraiche",
+      "Light Blue Eau Intense Pour Homme",
+      "Aqva Amara",
+      "Chrome Aqua",
+      "Allure Homme Sport Cologne",
+      "L'Eau d'Issey Pour Homme",
+      "Classica Men",
+      "CK Everyone Eau de Toilette",
+      "Man Extreme"
+    ],
+    "metadata": {
+      "db_filter": {
+        "season_summer": {
+          "$gte": 1.0
+        },
+        "gender_score": {
+          "$gt": 0.6
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "fresh summer citrus aquatic men",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "season_02",
+    "category": "Season + Gender",
+    "question": "Best winter fragrance for women with strong longevity",
+    "ground_truth": [
+      "A Whiff of Waffle Cone by Imaginary Authors",
+      "Choco Musk PERFUMES by ALREHAB",
+      "La Belle Le Parfum by Jean Paul Gaultier",
+      "Scandal Le Parfum by Jean Paul Gaultier",
+      "Fève Délicieuse by Dior",
+      "Addict Eau de Parfum by Dior",
+      "Addict Eau de Parfum (2014) by Dior",
+      "Good Girl Suprême by Carolina Herrera",
+      "Black Opium by Yves Saint Laurent",
+      "Nomade Naturelle Eau de Parfum Chloé by Chloe"
+    ],
+    "ground_truth_short": [
+      "A Whiff of Waffle Cone",
+      "Choco Musk PERFUMES",
+      "La Belle Le Parfum",
+      "Scandal Le Parfum",
+      "Fève Délicieuse",
+      "Addict Eau de Parfum",
+      "Addict Eau de Parfum (2014)",
+      "Good Girl Suprême",
+      "Black Opium",
+      "Nomade Naturelle Eau de Parfum Chloé"
+    ],
+    "metadata": {
+      "db_filter": {
+        "season_winter": {
+          "$gte": 1.0
+        },
+        "gender_score": {
+          "$lt": 0.4
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "warm winter long lasting women",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "season_03",
+    "category": "Season + Gender",
+    "question": "A spring perfume suitable for both men and women",
+    "ground_truth": [
+      "You Or Someone Like You Etat Libre d'Orange by Etat Libre d Orange",
+      "Lamar by Kajal",
+      "Sun Song (2025) by Louis Vuitton",
+      "CK One by Calvin Klein",
+      "Paris – Biarritz by Chanel",
+      "Legacy by MAISON ASRAR",
+      "L'Eau d'Hiver by Frederic Malle",
+      "Moonlight in Heaven by By Kilian",
+      "Vulcan Feu by French Avenue",
+      "Opulent Dubai by Lattafa Perfumes"
+    ],
+    "ground_truth_short": [
+      "You Or Someone Like You Etat Libre d'Orange",
+      "Lamar",
+      "Sun Song (2025)",
+      "CK One",
+      "Paris – Biarritz",
+      "Legacy",
+      "L'Eau d'Hiver",
+      "Moonlight in Heaven",
+      "Vulcan Feu",
+      "Opulent Dubai"
+    ],
+    "metadata": {
+      "db_filter": {
+        "season_spring": {
+          "$gte": 1.0
+        },
+        "gender_score": {
+          "$gte": 0.35,
+          "$lte": 0.65
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "spring unisex fresh floral",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "accord_01",
+    "category": "Accord-Specific",
+    "question": "A dark smoky oud perfume",
+    "ground_truth": [
+      "Armani Privé Oud Royal by Giorgio Armani",
+      "Oud Wood by Tom Ford",
+      "Ombre Nomade by Louis Vuitton",
+      "Black Afgano by Nasomatto",
+      "Leather Oud by Dior",
+      "The Night by Frederic Malle",
+      "Under the Stars by Maison Martin Margiela",
+      "Oud Malaki by Chopard",
+      "Haltane by Parfums de Marly",
+      "M7 by Yves Saint Laurent"
+    ],
+    "ground_truth_short": [
+      "Armani Privé Oud Royal",
+      "Oud Wood",
+      "Ombre Nomade",
+      "Black Afgano",
+      "Leather Oud",
+      "The Night",
+      "Under the Stars",
+      "Oud Malaki",
+      "Haltane",
+      "M7"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": "weighted_rating",
+      "semantic_query": "dark smoky oud intense mysterious",
+      "accord_filter": [
+        "oud"
+      ],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "accord_02",
+    "category": "Accord-Specific",
+    "question": "Sweet vanilla gourmand dessert perfume",
+    "ground_truth": [
+      "Empire Victor by Khadlaj Perfumes",
+      "Amore Caffè by Mancera",
+      "Molten Caramel by PARIS CORNER",
+      "Scandal Le Parfum by Jean Paul Gaultier",
+      "Eclaire by Lattafa Perfumes",
+      "Cheirosa '71 by Sol de Janeiro",
+      "Escapade Gourmande by Maison Mataha",
+      "Bianco Latte by Giardini Di Toscana",
+      "Queens Caramel by Ellis Brooklyn",
+      "Caramelo Vanilla by New Notes"
+    ],
+    "ground_truth_short": [
+      "Empire Victor",
+      "Amore Caffè",
+      "Molten Caramel",
+      "Scandal Le Parfum",
+      "Eclaire",
+      "Cheirosa '71",
+      "Escapade Gourmande",
+      "Bianco Latte",
+      "Queens Caramel",
+      "Caramelo Vanilla"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": "weighted_rating",
+      "semantic_query": "sweet vanilla gourmand dessert caramel",
+      "accord_filter": [
+        "vanilla"
+      ],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "accord_03",
+    "category": "Accord-Specific",
+    "question": "Fresh citrus cologne for hot weather",
+    "ground_truth": [
+      "Atlantis Extrait by French Avenue",
+      "Light Blue Eau Intense Pour Homme by Dolce&Gabbana",
+      "Paris – Biarritz by Chanel",
+      "Acqua di Gioia by Giorgio Armani",
+      "CK Everyone Eau de Toilette by Calvin Klein",
+      "Summer of 84 #12 by Kerosene",
+      "Allure Homme Sport Cologne by Chanel",
+      "Man Extreme by Bvlgari",
+      "Blu Mediterraneo Arancia di Capri by Acqua di Parma",
+      "Light Blue pour Homme by Dolce&Gabbana"
+    ],
+    "ground_truth_short": [
+      "Atlantis Extrait",
+      "Light Blue Eau Intense Pour Homme",
+      "Paris – Biarritz",
+      "Acqua di Gioia",
+      "CK Everyone Eau de Toilette",
+      "Summer of 84 #12",
+      "Allure Homme Sport Cologne",
+      "Man Extreme",
+      "Blu Mediterraneo Arancia di Capri",
+      "Light Blue pour Homme"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": "weighted_rating",
+      "semantic_query": "fresh citrus aquatic cologne summer",
+      "accord_filter": [
+        "citrus"
+      ],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "price_01",
+    "category": "Price-Tier",
+    "question": "Best cheap perfume under budget for men",
+    "ground_truth": [
+      "Colors Man Black by Benetton",
+      "Obsession for Men by Calvin Klein",
+      "Agua Brava by Antonio Puig",
+      "CK One Shock For Him by Calvin Klein",
+      "for Men Intense by Bentley",
+      "Men by Bijan",
+      "pour Homme by Azzaro",
+      "Club De Nuit Urban Elixir by Armaf",
+      "Lion by Rayhaan",
+      "Turathi Blue by Afnan"
+    ],
+    "ground_truth_short": [
+      "Colors Man Black",
+      "Obsession for Men",
+      "Agua Brava",
+      "CK One Shock For Him",
+      "for Men Intense",
+      "Men",
+      "pour Homme",
+      "Club De Nuit Urban Elixir",
+      "Lion",
+      "Turathi Blue"
+    ],
+    "metadata": {
+      "db_filter": {
+        "price_tier_score": {
+          "$lt": 3.0
+        },
+        "gender_score": {
+          "$gt": 0.6
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "cheap affordable masculine",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "price_02",
+    "category": "Price-Tier",
+    "question": "Most luxurious premium niche perfume",
+    "ground_truth": [
+      "His Confession by Lattafa Perfumes",
+      "XJ 1861 Naxos by Xerjoff",
+      "L'Homme Idéal Extrême by Guerlain",
+      "Le Male Elixir by Jean Paul Gaultier",
+      "Royal Oud by Creed",
+      "Overture Man by Amouage",
+      "Gentleman Society Eau de Parfum Ambrée by Givenchy",
+      "Boss Bottled Elixir by Hugo Boss",
+      "Intense Cedrat Boise by Mancera",
+      "Supremacy Not Only Intense by Afnan"
+    ],
+    "ground_truth_short": [
+      "His Confession",
+      "XJ 1861 Naxos",
+      "L'Homme Idéal Extrême",
+      "Le Male Elixir",
+      "Royal Oud",
+      "Overture Man",
+      "Gentleman Society Eau de Parfum Ambrée",
+      "Boss Bottled Elixir",
+      "Intense Cedrat Boise",
+      "Supremacy Not Only Intense"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": "weighted_rating",
+      "semantic_query": "luxury niche premium exclusive high quality",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "brand_01",
+    "category": "Brand",
+    "question": "Best perfumes by Tom Ford",
+    "ground_truth": [
+      "Noir Extreme by Tom Ford",
+      "Noir Extreme Parfum by Tom Ford",
+      "Ombré Leather (2018) by Tom Ford",
+      "Ombré Leather Parfum by Tom Ford",
+      "Beau De Jour Eau de Parfum by Tom Ford",
+      "Oud Wood by Tom Ford",
+      "Eau d'Ombré Leather by Tom Ford",
+      "Grey Vetiver by Tom Ford",
+      "Tuscan Leather by Tom Ford",
+      "Tobacco Oud by Tom Ford"
+    ],
+    "ground_truth_short": [
+      "Noir Extreme",
+      "Noir Extreme Parfum",
+      "Ombré Leather (2018)",
+      "Ombré Leather Parfum",
+      "Beau De Jour Eau de Parfum",
+      "Oud Wood",
+      "Eau d'Ombré Leather",
+      "Grey Vetiver",
+      "Tuscan Leather",
+      "Tobacco Oud"
+    ],
+    "metadata": {
+      "db_filter": {
+        "brand": "Tom Ford"
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": null,
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "brand_02",
+    "category": "Brand",
+    "question": "Best perfumes by Dior",
+    "ground_truth": [
+      "Homme Original by Dior",
+      "Homme Parfum by Dior",
+      "Homme Cologne 2022 by Dior",
+      "Homme Intense 2011 by Dior",
+      "Homme Intense 2007 by Dior",
+      "Rouge Trafalgar Esprit De Parfum by Dior",
+      "Homme Cologne 2013 by Dior",
+      "Homme by Dior",
+      "Homme 2005 by Dior",
+      "Eau Sauvage Parfum 2017 by Dior"
+    ],
+    "ground_truth_short": [
+      "Homme Original",
+      "Homme Parfum",
+      "Homme Cologne 2022",
+      "Homme Intense 2011",
+      "Homme Intense 2007",
+      "Rouge Trafalgar Esprit De Parfum",
+      "Homme Cologne 2013",
+      "Homme",
+      "Homme 2005",
+      "Eau Sauvage Parfum 2017"
+    ],
+    "metadata": {
+      "db_filter": {
+        "brand": "Dior"
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": null,
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "brand_03",
+    "category": "Brand",
+    "question": "Most popular Chanel fragrances",
+    "ground_truth": [
+      "Coco Mademoiselle by Chanel",
+      "Bleu de by Chanel",
+      "Bleu de Eau de Parfum by Chanel",
+      "Chance Eau Tendre by Chanel",
+      "Chance Eau Fraiche by Chanel",
+      "Allure Homme Sport by Chanel",
+      "No 5 Parfum by Chanel",
+      "Coco Eau de Parfum by Chanel",
+      "Chance Eau de Toilette by Chanel",
+      "Allure Homme Sport Eau Extreme by Chanel"
+    ],
+    "ground_truth_short": [
+      "Coco Mademoiselle",
+      "Bleu de",
+      "Bleu de Eau de Parfum",
+      "Chance Eau Tendre",
+      "Chance Eau Fraiche",
+      "Allure Homme Sport",
+      "No 5 Parfum",
+      "Coco Eau de Parfum",
+      "Chance Eau de Toilette",
+      "Allure Homme Sport Eau Extreme"
+    ],
+    "metadata": {
+      "db_filter": {
+        "brand": "Chanel"
+      },
+      "sort_by": "popularity_score",
+      "semantic_query": null,
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "tod_01",
+    "category": "Time of Day",
+    "question": "A perfume perfect for daytime office wear",
+    "ground_truth": [
+      "Pour Homme Soir by Bvlgari",
+      "L'Homme by Yves Saint Laurent",
+      "4. Montabaco Intensivo by Ormonde Jayne",
+      "Acqua di Giò Parfum by Giorgio Armani",
+      "Grey Vetiver by Tom Ford",
+      "Chrome Aqua by Azzaro",
+      "L'eau d'Issey by Issey Miyake",
+      "Acqua di Giò Profondo Eau de Parfum (2024) by Giorgio Armani",
+      "CK be by Calvin Klein",
+      "MYSLF Eau de Parfum by Yves Saint Laurent"
+    ],
+    "ground_truth_short": [
+      "Pour Homme Soir",
+      "L'Homme",
+      "4. Montabaco Intensivo",
+      "Acqua di Giò Parfum",
+      "Grey Vetiver",
+      "Chrome Aqua",
+      "L'eau d'Issey",
+      "Acqua di Giò Profondo Eau de Parfum (2024)",
+      "CK be",
+      "MYSLF Eau de Parfum"
+    ],
+    "metadata": {
+      "db_filter": {
+        "tod_day": {
+          "$gte": 1.0
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "clean fresh professional office daytime",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "tod_02",
+    "category": "Time of Day",
+    "question": "Seductive night out fragrance",
+    "ground_truth": [
+      "Armani Code Absolu by Giorgio Armani",
+      "212 VIP Black by Carolina Herrera",
+      "Envy for Men by Gucci",
+      "Carlisle by Parfums de Marly",
+      "Vanille Havane by Les Indemodables",
+      "Noir Extreme Parfum by Tom Ford",
+      "Angels' Share by By Kilian",
+      "Black Phantom by By Kilian",
+      "Memoir Woman by Amouage",
+      "Black Orchid by Tom Ford"
+    ],
+    "ground_truth_short": [
+      "Armani Code Absolu",
+      "212 VIP Black",
+      "Envy for Men",
+      "Carlisle",
+      "Vanille Havane",
+      "Noir Extreme Parfum",
+      "Angels' Share",
+      "Black Phantom",
+      "Memoir Woman",
+      "Black Orchid"
+    ],
+    "metadata": {
+      "db_filter": {
+        "tod_night": {
+          "$gte": 1.0
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "seductive night club party dark",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "semantic_01",
+    "category": "Semantic-Only",
+    "question": "Dark mysterious intense fragrance",
+    "ground_truth": [
+      "Fahrenheit Absolute by Dior",
+      "Memoir Woman by Amouage",
+      "Black Afgano by Nasomatto",
+      "Bois d'Encens by Giorgio Armani",
+      "Principalities by Caeleste Parfums",
+      "Black Eau de Toilette by Comme des Garcons",
+      "Black Opium Extreme by Yves Saint Laurent",
+      "Rien Etat Libre d'Orange by Etat Libre d Orange",
+      "Black Phantom by By Kilian",
+      "Dorian's Spleen L'Entropiste by L Entropiste"
+    ],
+    "ground_truth_short": [
+      "Fahrenheit Absolute",
+      "Memoir Woman",
+      "Black Afgano",
+      "Bois d'Encens",
+      "Principalities",
+      "Black Eau de Toilette",
+      "Black Opium Extreme",
+      "Rien Etat Libre d'Orange",
+      "Black Phantom",
+      "Dorian's Spleen L'Entropiste"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": null,
+      "semantic_query": "dark mysterious intense smoky deep",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "semantic_02",
+    "category": "Semantic-Only",
+    "question": "Clean soapy out of the shower scent",
+    "ground_truth": [
+      "The Ghost In The Shell Etat Libre d'Orange by Etat Libre d Orange",
+      "Cologne Bleue Condé Parfum by Conde Parfum",
+      "Amber Oud Aqua Dubai by Al Haramain Perfumes",
+      "Homme Cologne 2022 by Dior",
+      "Touch for Men by Burberry",
+      "MYSLF Eau de Parfum by Yves Saint Laurent",
+      "Blanche by Byredo",
+      "4. Montabaco Intensivo by Ormonde Jayne",
+      "Chloé Eau de Parfum Chloé by Chloe",
+      "Light Blue by Dolce&Gabbana"
+    ],
+    "ground_truth_short": [
+      "The Ghost In The Shell Etat Libre d'Orange",
+      "Cologne Bleue Condé Parfum",
+      "Amber Oud Aqua Dubai",
+      "Homme Cologne 2022",
+      "Touch for Men",
+      "MYSLF Eau de Parfum",
+      "Blanche",
+      "4. Montabaco Intensivo",
+      "Chloé Eau de Parfum Chloé",
+      "Light Blue"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": null,
+      "semantic_query": "clean soapy shower fresh laundry",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "semantic_03",
+    "category": "Semantic-Only",
+    "question": "Romantic date night warm sensual perfume",
+    "ground_truth": [
+      "La Belle Le Parfum by Jean Paul Gaultier",
+      "Scandal Pour Homme Absolu by Jean Paul Gaultier",
+      "Scandal Le Parfum by Jean Paul Gaultier",
+      "Amore Caffè by Mancera",
+      "Khamrah by Lattafa Perfumes",
+      "Invite Only Amber | 23 by Kayali Fragrances",
+      "Noir Extreme by Tom Ford",
+      "Nomade Naturelle Eau de Parfum Chloé by Chloe",
+      "Duchessa by Gritti",
+      "The Most Wanted by Azzaro"
+    ],
+    "ground_truth_short": [
+      "La Belle Le Parfum",
+      "Scandal Pour Homme Absolu",
+      "Scandal Le Parfum",
+      "Amore Caffè",
+      "Khamrah",
+      "Invite Only Amber | 23",
+      "Noir Extreme",
+      "Nomade Naturelle Eau de Parfum Chloé",
+      "Duchessa",
+      "The Most Wanted"
+    ],
+    "metadata": {
+      "db_filter": {},
+      "sort_by": null,
+      "semantic_query": "romantic date night warm sensual seductive",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "year_01",
+    "category": "New Releases",
+    "question": "Best new perfumes",
+    "ground_truth": [
+      "Shams Al Emarat Pink Blush by Ard Al Zaafaran",
+      "Club De Nuit Lionheart Man by Armaf",
+      "Vulcan Feu by French Avenue",
+      "La Di Da For Him by Arabiyat Prestige",
+      "Mahd Al Dhahab by Arabiyat Prestige",
+      "Marwa by Arabiyat Prestige",
+      "Platine Blanc by Aromatix X French Avenue",
+      "Bal d'Afrique Absolu by Byredo",
+      "Buongiorno by Acqua di Parma",
+      "Purpose 50 by Amouage"
+    ],
+    "ground_truth_short": [
+      "Shams Al Emarat Pink Blush",
+      "Club De Nuit Lionheart Man",
+      "Vulcan Feu",
+      "La Di Da For Him",
+      "Mahd Al Dhahab",
+      "Marwa",
+      "Platine Blanc",
+      "Bal d'Afrique Absolu",
+      "Buongiorno",
+      "Purpose 50"
+    ],
+    "metadata": {
+      "db_filter": {
+        "year": {
+          "$gte": 2025
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": null,
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "combo_01",
+    "category": "Combined",
+    "question": "Cheap fresh summer cologne for men released after 2020",
+    "ground_truth": [
+      "Turathi Blue by Afnan",
+      "9am Dive by Afnan",
+      "Pacific Aura by Rayhaan",
+      "Jean Lowe Immortal by Maison Alhambra",
+      "Chrome Extreme by Azzaro",
+      "CK Everyone Eau de Toilette by Calvin Klein",
+      "Amber Oud Aqua Dubai by Al Haramain Perfumes",
+      "Rare Reef by Afnan",
+      "Nitro Red Intensely by Dumont",
+      "Le Sel d’Issey by Issey Miyake"
+    ],
+    "ground_truth_short": [
+      "Turathi Blue",
+      "9am Dive",
+      "Pacific Aura",
+      "Jean Lowe Immortal",
+      "Chrome Extreme",
+      "CK Everyone Eau de Toilette",
+      "Amber Oud Aqua Dubai",
+      "Rare Reef",
+      "Nitro Red Intensely",
+      "Le Sel d’Issey"
+    ],
+    "metadata": {
+      "db_filter": {
+        "season_summer": {
+          "$gte": 1.0
+        },
+        "gender_score": {
+          "$gt": 0.6
+        },
+        "price_tier_score": {
+          "$lt": 4.0
+        },
+        "year": {
+          "$gte": 2020
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "fresh summer citrus aquatic cheap",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "combo_02",
+    "category": "Combined",
+    "question": "Premium winter vanilla for women with great longevity",
+    "ground_truth": [
+      "La Belle Le Parfum by Jean Paul Gaultier",
+      "Shalimar Millésime Tonka by Guerlain",
+      "A Whiff of Waffle Cone by Imaginary Authors",
+      "Angel by Mugler",
+      "Italica (2021) by Xerjoff",
+      "Choco Musk PERFUMES by ALREHAB",
+      "Fève Délicieuse by Dior",
+      "Nebras by Lattafa Perfumes",
+      "Black Opium by Yves Saint Laurent",
+      "Addict Eau de Parfum by Dior"
+    ],
+    "ground_truth_short": [
+      "La Belle Le Parfum",
+      "Shalimar Millésime Tonka",
+      "A Whiff of Waffle Cone",
+      "Angel",
+      "Italica (2021)",
+      "Choco Musk PERFUMES",
+      "Fève Délicieuse",
+      "Nebras",
+      "Black Opium",
+      "Addict Eau de Parfum"
+    ],
+    "metadata": {
+      "db_filter": {
+        "season_winter": {
+          "$gte": 1.0
+        },
+        "gender_score": {
+          "$lt": 0.4
+        }
+      },
+      "sort_by": "weighted_rating",
+      "semantic_query": "vanilla warm winter long lasting women premium quality",
+      "accord_filter": [],
+      "pool_size": 10,
+      "strategy": "dual (rating + semantic)"
+    }
+  },
+  {
+    "id": "sim_01",
+    "category": "Similarity",
+    "question": "A perfume similar to Creed Aventus",
+    "ground_truth": [
+      "Club de Nuit Intense Man by Armaf",
+      "Explorer by Montblanc",
+      "Supremacy Silver by Afnan",
+      "L'Aventure by Al Haramain Perfumes",
+      "Cedrat Boise by Mancera",
+      "Hacivat by Nishane"
+    ],
+    "ground_truth_short": [
+      "Club de Nuit Intense Man",
+      "Explorer",
+      "Supremacy Silver",
+      "L'Aventure",
+      "Cedrat Boise",
+      "Hacivat"
+    ],
+    "metadata": {}
+  },
+  {
+    "id": "sim_02",
+    "category": "Similarity + Constraint",
+    "question": "A cheaper alternative to Baccarat Rouge 540 under budget",
+    "ground_truth": [
+      "Cloud by Ariana Grande",
+      "Amber Oud Rouge by Al Haramain Perfumes",
+      "Sunset Riot by Allsaints",
+      "Red Temptation For Her by Zara",
+      "Club de Nuit Untold by Armaf",
+      "Ana Abiyedh Rouge by Lattafa Perfumes"
+    ],
+    "ground_truth_short": [
+      "Cloud",
+      "Amber Oud Rouge",
+      "Sunset Riot",
+      "Red Temptation For Her",
+      "Club de Nuit Untold",
+      "Ana Abiyedh Rouge"
+    ],
+    "metadata": {}
+  },
+  {
+    "id": "sim_03",
+    "category": "Similarity + Modifier",
+    "question": "A darker, more mature and woody version of Acqua di Gio",
+    "ground_truth": [
+      "Acqua di Giò Profumo by Giorgio Armani",
+      "Acqua di Giò Parfum by Giorgio Armani",
+      "Bleu de Chanel by Chanel",
+      "Essenza di Colonia by Acqua di Parma",
+      "Acqua di Giò Essenza by Giorgio Armani"
+    ],
+    "ground_truth_short": [
+      "Acqua di Giò Profumo",
+      "Acqua di Giò Parfum",
+      "Bleu de Chanel",
+      "Essenza di Colonia",
+      "Acqua di Giò Essenza"
+    ],
+    "metadata": {}
+  },
+  {
+    "id": "comp_01",
+    "category": "Comparison",
+    "question": "Bleu de Chanel vs Dior Sauvage",
+    "ground_truth": [
+      "Bleu de Chanel Eau de Parfum by Chanel",
+      "Bleu de Chanel by Chanel",
+      "Bleu de Chanel Parfum by Chanel",
+      "Sauvage by Dior",
+      "Sauvage Eau de Parfum by Dior",
+      "Sauvage Parfum by Dior",
+      "Sauvage Elixir by Dior"
+    ],
+    "ground_truth_short": [
+      "Bleu de Chanel Eau de Parfum",
+      "Bleu de Chanel",
+      "Bleu de Chanel Parfum",
+      "Sauvage",
+      "Sauvage Eau de Parfum",
+      "Sauvage Parfum",
+      "Sauvage Elixir"
+    ],
+    "metadata": {}
+  },
+  {
+    "id": "brand_query_01",
+    "category": "Brand + Query",
+    "question": "Woody winter fragrance by Tom Ford",
+    "ground_truth": [
+      "Oud Wood by Tom Ford",
+      "Tuscan Leather by Tom Ford",
+      "Tobacco Vanille by Tom Ford",
+      "Noir Extreme by Tom Ford",
+      "Ombré Leather (2018) by Tom Ford",
+      "Ébène Fumé by Tom Ford"
+    ],
+    "ground_truth_short": [
+      "Oud Wood",
+      "Tuscan Leather",
+      "Tobacco Vanille",
+      "Noir Extreme",
+      "Ombré Leather (2018)",
+      "Ébène Fumé"
+    ],
+    "metadata": {}
+  },
+  {
+    "id": "brand_query_02",
+    "category": "Brand + Query",
+    "question": "Sweet vanilla gourmand perfume from Yves Saint Laurent",
+    "ground_truth": [
+      "Black Opium by Yves Saint Laurent",
+      "Libre Intense by Yves Saint Laurent",
+      "Babycat by Yves Saint Laurent",
+      "Manifesto by Yves Saint Laurent",
+      "Black Opium Le Parfum by Yves Saint Laurent"
+    ],
+    "ground_truth_short": [
+      "Black Opium",
+      "Libre Intense",
+      "Babycat",
+      "Manifesto",
+      "Black Opium Le Parfum"
+    ],
+    "metadata": {}
+  }
+]
