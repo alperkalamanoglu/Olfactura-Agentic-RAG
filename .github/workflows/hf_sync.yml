@@ -1,0 +1,26 @@
+name: Sync to Hugging Face hub
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Push to hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "bot@huggingface.co"
+          git config --global user.name "Hugging Face Sync Bot"
+          git lfs install
+          git lfs track "chroma_db/**"
+          git lfs track "assets/*.gif"
+          git add .gitattributes
+          git commit -m "chore: track large files via LFS for HuggingFace" || echo "No LFS changes"
+          git push --force https://alperkalamanoglu:$HF_TOKEN@huggingface.co/spaces/alperkalamanoglu/olfactura-ai main

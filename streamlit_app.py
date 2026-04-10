@@ -192,6 +192,30 @@ html {
     box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
     color: #0a0a0f !important;
     gap: 0 !important;
+    overflow: hidden !important;
+}
+/* Fix for empty white boxes and flickering during streaming */
+div[data-testid="stMarkdownContainer"]:empty,
+div[data-testid="stVerticalBlock"] > div:empty {
+    display: none !important;
+}
+div[data-testid="stMarkdownContainer"] p:empty {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+/* Ensure no white background bleed in assistant messages */
+div[data-testid="stChatMessage"] .stMarkdown,
+div[data-testid="stChatMessage"] .stMarkdownContainer {
+    background-color: transparent !important;
+}
+/* Final Nuke: Any empty container or one with only whitespace should be invisible */
+div:empty, 
+div:has(> :empty),
+.stMarkdown:empty {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 /* Safely hide the avatar box (first child of the stChatMessage flex row) */
 [data-testid="stChatMessage"] > div:first-child {
@@ -1026,26 +1050,23 @@ if should_run and user_input:
                 ''', unsafe_allow_html=True)
             
             with chat_container.chat_message("assistant", avatar="✨"):
-                response_placeholder = st.empty()
-                
-                # 2. Initialize generator (send FULL input with cache tag to Agent)
+                # 1. Initialize generator (send FULL input with cache tag to Agent)
                 gen = st.session_state.agent.chat_stream(clean_input)
                 
-                # 3. Wait for first chunk with Spinner (This covers Tool Execution time)
+                # 2. Wait for first chunk with Spinner (This covers Tool Execution time)
                 first_chunk = ""
                 with st.spinner("🔮 Consults the fragrance database..."):
                     try:
                         # Grab first chunk manually to unblock spinner
                         first_chunk = next(gen)
                     except StopIteration:
-                        # Generator empty (rare)
                         pass
                     except Exception as e:
                         st.error(f"Error during analysis: {e}")
                         response = None
                         first_chunk = None
 
-                # 4. Stream the rest
+                # 3. Stream the rest
                 if first_chunk is not None:
                     try:
                         def stream_wrapper():
@@ -1053,17 +1074,16 @@ if should_run and user_input:
                             buffer = ""
                             for chunk in gen:
                                 buffer += chunk
-                                # Batching chunks to prevent React DOM overload on long chats.
-                                # Streamlit can clog if it receives 50+ token messages per second.
-                                if len(buffer) >= 4:
-                                    # Micro-sleep allows the frontend to gracefully paint the frame
-                                    time.sleep(0.005) 
-                                    yield buffer
-                                    buffer = ""
+                                # Smoothly distribute the content in 5-char batches
+                                # This prevents 'bursts' while keeping React DOM overhead low.
+                                while len(buffer) >= 5:
+                                    yield buffer[:5]
+                                    buffer = buffer[5:]
+                                    time.sleep(0.02) 
                             if buffer:
                                 yield buffer
                                 
-                        response = response_placeholder.write_stream(stream_wrapper())
+                        response = st.write_stream(stream_wrapper())
                     except Exception as e:
                         st.error(f"Error streaming response: {e}")
                         response = None

@@ -225,8 +225,11 @@ def search_perfumes(query: Optional[str] = None,
             
         # --- QUALITY FILTER (Anti-Hallucination) ---
         if clean_query:
-            top_score = results[0].get('hybrid_score', results[0].get('initial_cosine_score', 0))
-            if top_score < 0.30:
+            # relevance_score is the raw Cross-Encoder logit (-10 to +4 range)
+            # -4.0 is the neutral 'coin-toss' point (0.50 score) in our sigmoid curve.
+            # Anything below -4.0 is statistically likely to be irrelevant/noise.
+            top_relevance = results[0].get('relevance_score', 0)
+            if top_relevance < -4.0:
                 return "MATCH_QUALITY_TOO_LOW: I found some distant relatives, but nothing that truly matches your specific query. Rather than suggesting irrelevant scents, I recommend trying more common scent profiles or different keywords."
             
         # Format results (Markdown)
