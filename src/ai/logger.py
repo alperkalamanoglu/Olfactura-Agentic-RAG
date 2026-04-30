@@ -42,7 +42,10 @@ def get_logger(name):
     console_handler.setFormatter(formatter)
     
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+    
+    # Only add console handler if specifically requested (avoids public log leakage)
+    if os.getenv("DEBUG_MODE") == "True":
+        logger.addHandler(console_handler)
     
     return logger
 

@@ -4,9 +4,11 @@ from typing import List, Dict, Any, Optional
 from src.database.vector_db import VectorDatabase
 from src.ai.formatters import format_price_tier, format_gender, format_longevity, format_sillage
 from src.ai.logger import log_tool_call
+from src.utils.cache_manager import CacheManager
 
-# Global DB instance (will be initialized on first use)
+# Global DB and Cache instances
 _db = None
+_cache = CacheManager()
 
 def get_db():
     global _db
@@ -211,6 +213,12 @@ def search_perfumes(query: Optional[str] = None,
 
     clean_query = query.strip().lower() if query else None
     
+    # 1. CACHE LOOKUP
+    cache_args = {"query": clean_query, "filters": filters, "sort_by": sort_by, "excluded_notes": excluded_notes}
+    cached_res = _cache.get("search_perfumes", cache_args)
+    if cached_res:
+        return cached_res
+
     try:
         results = get_db().search(
             query=clean_query,
@@ -226,10 +234,10 @@ def search_perfumes(query: Optional[str] = None,
         # --- QUALITY FILTER (Anti-Hallucination) ---
         if clean_query:
             # relevance_score is the raw Cross-Encoder logit (-10 to +4 range)
-            # -4.0 is the neutral 'coin-toss' point (0.50 score) in our sigmoid curve.
-            # Anything below -4.0 is statistically likely to be irrelevant/noise.
+            # -6.0 is a permissive threshold: it allows matches that have some 
+            # semantic signal even if the model isn't highly confident.
             top_relevance = results[0].get('relevance_score', 0)
-            if top_relevance < -4.0:
+            if top_relevance < -6.0:
                 return "MATCH_QUALITY_TOO_LOW: I found some distant relatives, but nothing that truly matches your specific query. Rather than suggesting irrelevant scents, I recommend trying more common scent profiles or different keywords."
             
         # Format results (Markdown)
@@ -256,6 +264,10 @@ def search_perfumes(query: Optional[str] = None,
             formatted_output += perfume_text
             
         log_tool_call("search_perfumes", {"query": clean_query, "excluded": excluded_notes})
+        
+        # 2. CACHE STORE
+        _cache.set("search_perfumes", cache_args, formatted_output)
+        
         return formatted_output
         
     except Exception as e:
@@ -264,6 +276,13 @@ def search_perfumes(query: Optional[str] = None,
 def get_perfume_details(perfume_name: str) -> str:
     """Retrieves full details for a single perfume from the database."""
     clean_name = perfume_name.strip().lower()
+    
+    # CACHE LOOKUP
+    cache_args = {"name": clean_name}
+    cached_res = _cache.get("get_perfume_details", cache_args)
+    if cached_res:
+        return cached_res
+        
     try:
         res = get_db().get_by_name(clean_name)
         record = res["record"]
@@ -285,6 +304,10 @@ def get_perfume_details(perfume_name: str) -> str:
         output += f"**Notes:** {extract_notes_smart(record)}\n"
         
         log_tool_call("get_perfume_details", {"name": clean_name})
+        
+        # CACHE STORE
+        _cache.set("get_perfume_details", cache_args, output)
+        
         return output
     except Exception as e:
         return f"Error getting perfume details: {str(e)}"
@@ -306,6 +329,13 @@ def recommend_similar(reference_perfume_names: Any,
         names = reference_perfume_names
         
     clean_names = tuple(sorted([str(n).strip().lower() for n in names]))
+    
+    # CACHE LOOKUP
+    cache_args = {"names": list(clean_names), "add_query": additional_query, "filters": filters}
+    cached_res = _cache.get("recommend_similar", cache_args)
+    if cached_res:
+        return cached_res
+
     filters_json = json.dumps(filters, sort_keys=True) if filters else None
     
     result = _recommend_similar_impl(clean_names, filters_json, n_results, additional_query)
@@ -315,6 +345,9 @@ def recommend_similar(reference_perfume_names: Any,
         "additional_query": additional_query,
         "filters": filters
     })
+    
+    # CACHE STORE
+    _cache.set("recommend_similar", cache_args, result)
     
     return result
 
@@ -378,8 +411,17 @@ def compare_perfumes(perfume_names: List[str]) -> str:
     """Comparison tool - retrieves full details for multiple perfumes."""
     clean_names = tuple([str(n).strip() for n in perfume_names])
     
+    # CACHE LOOKUP
+    cache_args = {"names": clean_names}
+    cached_res = _cache.get("compare_perfumes", cache_args)
+    if cached_res:
+        return cached_res
+
     result = _compare_perfumes_impl(clean_names)
     
     log_tool_call("compare_perfumes", {"names": clean_names})
+    
+    # CACHE STORE
+    _cache.set("compare_perfumes", cache_args, result)
     
     return result

@@ -6,6 +6,7 @@ import streamlit as st
 import os
 import json
 import time
+import re
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -68,6 +69,205 @@ SUGGESTION_MAP = {
 # ---------------------------------------------------------
 # RESOURCE CACHING (CRITICAL FOR PERFORMANCE)
 # ---------------------------------------------------------
+
+def sync_data_to_hf():
+    """
+    Saves current cache and uploads both logs and dynamic_cache.json to HuggingFace Dataset.
+    Runs in a background thread to ensure zero UI lag.
+    """
+    import threading
+    from src.ai.tools import _cache 
+    
+    # 1. Save RAM state to local disk first
+    _cache.save_dynamic_cache()
+    _cache.save_static_cache()
+
+    def _upload():
+        hf_token = os.environ.get("HF_TOKEN")
+        hf_dataset_repo = os.environ.get("HF_DATASET_REPO")
+        if not (hf_token and hf_dataset_repo):
+            return
+        try:
+            from huggingface_hub import HfApi
+            from src.ai.logger import LOG_FILE
+            from src.ai.tools import _cache
+            api = HfApi()
+            
+            # Sync Logic: Upload Logs
+            if os.path.exists(LOG_FILE):
+                api.upload_file(
+                    path_or_fileobj=LOG_FILE,
+                    path_in_repo="logs/agent_activity.log",
+                    repo_id=hf_dataset_repo,
+                    repo_type="dataset",
+                    token=hf_token
+                )
+            
+            # Sync Logic: Upload Dynamic Cache
+            if os.path.exists(_cache.dynamic_cache_path):
+                api.upload_file(
+                    path_or_fileobj=_cache.dynamic_cache_path,
+                    path_in_repo="cache/dynamic_cache.json",
+                    repo_id=hf_dataset_repo,
+                    repo_type="dataset",
+                    token=hf_token
+                )
+
+            # Sync Logic: Upload Static (Quick) Cache
+            if os.path.exists(_cache.static_cache_path):
+                api.upload_file(
+                    path_or_fileobj=_cache.static_cache_path,
+                    path_in_repo="cache/quick_cache.json",
+                    repo_id=hf_dataset_repo,
+                    repo_type="dataset",
+                    token=hf_token
+                )
+        except Exception as e:
+            # Silent fail on local to avoid terminal noise
+            pass
+
+    threading.Thread(target=_upload, daemon=True).start()
+
+def download_data_from_hf():
+    """Download existing caches from HF at startup."""
+    hf_token = os.environ.get("HF_TOKEN")
+    hf_dataset_repo = os.environ.get("HF_DATASET_REPO")
+    if not (hf_token and hf_dataset_repo):
+        return
+    try:
+        from huggingface_hub import hf_hub_download
+        from src.ai.tools import _cache
+        import shutil
+        
+        # 1. Try Dynamic Cache
+        try:
+            d_path = hf_hub_download(repo_id=hf_dataset_repo, repo_type="dataset", filename="cache/dynamic_cache.json", token=hf_token, local_dir=".", local_dir_use_symlinks=False)
+            shutil.copy(d_path, _cache.dynamic_cache_path)
+            _cache.dynamic_cache = _cache._load_json(_cache.dynamic_cache_path)
+        except: pass
+
+        # 2. Try Static Cache
+        try:
+            s_path = hf_hub_download(repo_id=hf_dataset_repo, repo_type="dataset", filename="cache/quick_cache.json", token=hf_token, local_dir=".", local_dir_use_symlinks=False)
+            shutil.copy(s_path, _cache.static_cache_path)
+            _cache.static_cache = _cache._load_json(_cache.static_cache_path)
+        except: pass
+        
+        print(f"✅ Downloaded caches from HF.")
+    except Exception as e:
+        pass
+
+# Keep old name as alias
+def upload_backend_logs():
+    sync_data_to_hf()
+
+# ---------------------------------------------------------
+# HELPER: Convert gender labels to ChromaDB filter format
+# ---------------------------------------------------------
+def build_gender_chromadb_filter(gender_list: list) -> dict:
+    """Converts human-readable gender labels to ChromaDB-compatible filter operators.
+    Mirrors agent.py's _inject_gender_filter logic (lines 320-334).
+    """
+    if not gender_list:
+        return {}
+    
+    gender_map = {
+        "Masculine": {"gender_score": {"$gt": 0.6}},
+        "Feminine": {"gender_score": {"$lt": 0.4}},
+        "Unisex": {"$and": [
+            {"gender_score": {"$gte": 0.4}},
+            {"gender_score": {"$lte": 0.6}}
+        ]}
+    }
+    
+    if len(gender_list) == 1:
+        return gender_map.get(gender_list[0], {})
+    else:
+        or_conditions = [gender_map[g] for g in gender_list if g in gender_map]
+        if or_conditions:
+            return {"$or": or_conditions}
+    return {}
+
+# ---------------------------------------------------------
+# UI HELPER: PRE-WARM LOGIC
+# ---------------------------------------------------------
+def run_prewarm():
+    """Executes all SUGGESTION_MAP entries for all gender filters and saves to static cache."""
+    from src.ai.tools import search_perfumes, recommend_similar, compare_perfumes, _cache
+    
+    GENDER_VARIANTS = [
+        [], # All
+        ["Masculine"],
+        ["Feminine"],
+        ["Unisex"],
+        ["Masculine", "Feminine"],
+        ["Masculine", "Unisex"],
+        ["Feminine", "Unisex"]
+    ]
+    
+    total_tasks = len(SUGGESTION_MAP) * len(GENDER_VARIANTS)
+    progress_bar = st.progress(0, text="Initializing Pre-warm Engine...")
+    
+    count = 0
+    for name, item in SUGGESTION_MAP.items():
+        for gender_list in GENDER_VARIANTS:
+            count += 1
+            progress_bar.progress(count / total_tasks, text=f"Warming: {name} ({','.join(gender_list) or 'All'})")
+            
+            # Convert gender labels to proper ChromaDB filter format
+            filters = build_gender_chromadb_filter(gender_list)
+            
+            try:
+                # Determine which tool to call based on suggestion type (Logic matches SUGGESTION_MAP segments)
+                if isinstance(item, list):
+                    # Compare tool
+                    result = compare_perfumes(item)
+                    t_name, t_args = "compare_perfumes", {"names": tuple(item)}
+                elif name.startswith("🧬"):
+                    # Recommend similar tool (item is the perfume name)
+                    result = recommend_similar(reference_perfume_names=[item], filters=filters)
+                    t_name, t_args = "recommend_similar", {"names": (item.lower().strip(),), "add_query": None, "filters": filters}
+                else:
+                    # General search tool (item is the query string)
+                    result = search_perfumes(query=item, filters=filters)
+                    t_name, t_args = "search_perfumes", {"query": item.lower().strip(), "filters": filters, "sort_by": None, "excluded_notes": None}
+                
+                # Force save to static cache slot using the global _cache
+                _cache.set_static(t_name, t_args, result)
+            except Exception as e:
+                st.warning(f"Failed to warm {name}: {e}")
+    
+    # Save final results to disk
+    _cache.save_static_cache()
+    _cache.save_dynamic_cache()
+    progress_bar.empty()
+    st.success(f"🏁 Pre-warm Complete! {count} variant results saved to quick_cache.json.")
+    
+    # Synchronous upload to HF (must complete BEFORE st.rerun triggers download)
+    hf_token = os.environ.get("HF_TOKEN")
+    hf_dataset_repo = os.environ.get("HF_DATASET_REPO")
+    if hf_token and hf_dataset_repo:
+        try:
+            from huggingface_hub import HfApi
+            api = HfApi()
+            if os.path.exists(_cache.static_cache_path):
+                api.upload_file(
+                    path_or_fileobj=_cache.static_cache_path,
+                    path_in_repo="cache/quick_cache.json",
+                    repo_id=hf_dataset_repo, repo_type="dataset", token=hf_token
+                )
+            if os.path.exists(_cache.dynamic_cache_path):
+                api.upload_file(
+                    path_or_fileobj=_cache.dynamic_cache_path,
+                    path_in_repo="cache/dynamic_cache.json",
+                    repo_id=hf_dataset_repo, repo_type="dataset", token=hf_token
+                )
+            st.info("✅ Cache synced to HF Dataset.")
+        except Exception as e:
+            st.warning(f"HF sync failed: {e}")
+    st.rerun()
+
+# ---------------------------------------------------------
 @st.cache_resource(show_spinner="Initializing AI Engine & Reranker... 🧠")
 def init_resources():
     """
@@ -92,6 +292,10 @@ def init_resources():
 db_instance = init_resources()
 if db_instance:
     set_global_db(db_instance)
+    # Download cache from HF only ONCE per session (not every rerun)
+    if "_hf_cache_loaded" not in st.session_state:
+        download_data_from_hf()
+        st.session_state._hf_cache_loaded = True
 
 # Premium Light Mode CSS
 st.markdown("""
@@ -491,11 +695,10 @@ def submit_question():
     pass
 
 def set_suggestion(msg):
-    """Callback for suggestion buttons. Appends [CACHED_QUERY] tag for deterministic tool queries."""
+    """Callback for suggestion buttons. Appends [SUGGESTION_KEY] tag for direct tool bypass."""
     # Look up the canonical query for this suggestion
-    cached_query = SUGGESTION_MAP.get(msg)
-    if cached_query:
-        st.session_state.pending_input = f"{msg} [CACHED_QUERY: {cached_query}]"
+    if msg in SUGGESTION_MAP:
+        st.session_state.pending_input = f"{msg} [SUGGESTION_KEY: {msg}]"
     else:
         st.session_state.pending_input = msg
     st.session_state.is_processing = True
@@ -563,36 +766,9 @@ def log_interaction(query, response, context=None):
     """
     pass
 
+# Keep old name as alias to avoid breaking code elsewhere, but redirect to new logic
 def upload_backend_logs():
-    """
-    Uploads the full agent_activity.log to HuggingFace Dataset after each message.
-    This replaces the old per-message JSON approach — single file, no separate commits.
-    Runs in a background thread so it never blocks the UI.
-    """
-    import threading
-
-    def _upload():
-        hf_token = os.environ.get("HF_TOKEN")
-        hf_dataset_repo = os.environ.get("HF_DATASET_REPO")
-        if not (hf_token and hf_dataset_repo):
-            return
-        try:
-            from huggingface_hub import HfApi
-            from src.ai.logger import LOG_FILE  # canonical path set by logger.py
-            api = HfApi()
-            if os.path.exists(LOG_FILE):
-                api.upload_file(
-                    path_or_fileobj=LOG_FILE,
-                    path_in_repo="logs/agent_activity.log",
-                    repo_id=hf_dataset_repo,
-                    repo_type="dataset",
-                    token=hf_token,
-                    commit_message="log sync"
-                )
-        except Exception as e:
-            print(f"Agent Log Upload Error: {e}")
-
-    threading.Thread(target=_upload, daemon=True).start()
+    sync_data_to_hf()
 
 def extract_tool_calls(agent):
     """Extract tool calls from agent conversation history."""
@@ -630,7 +806,6 @@ def extract_latest_search_results(agent):
     Parses the last tool output to find search results.
     Returns a list of perfume dictionaries if found.
     """
-    import re
     # Scan history backwards for tool outputs
     for msg in reversed(agent.conversation_history):
         if isinstance(msg, dict) and msg.get("role") == "tool":
@@ -752,9 +927,9 @@ with chat_container:
     # Display chat history
     for message in st.session_state.messages:
         if message["role"] == "user":
-            import re as _re
-            # CACHED_QUERY can contain arrays like ['Perfume A', 'Perfume B'], so .* safely strips to the end
-            _display = _re.sub(r'\s*\[CACHED_QUERY:.*$', '', message["content"]).strip()
+            # Strip internal tags from display
+            _display = re.sub(r'\s*\[SUGGESTION_KEY:.*$', '', message["content"]).strip()
+            _display = re.sub(r'\s*\[CACHED_QUERY:.*$', '', _display).strip()
             st.markdown(f'''
             <div class="user-msg-container">
                 <div class="user-msg">
@@ -1032,12 +1207,16 @@ if should_run and user_input:
                 else:
                     st.session_state.agent.gender_filter = []
 
-            # Strip [CACHED_QUERY: ...] tag for display (user shouldn't see internal cache hints)
-            # CACHED_QUERY can contain arrays like ['A', 'B'], so .*$ safely strips to the end
-            import re
-            display_input = re.sub(r'\s*\[CACHED_QUERY:.*$', '', clean_input).strip()
+            # Strip internal tags for display (user shouldn't see cache hints)
+            suggestion_key = None
+            match = re.search(r'\[SUGGESTION_KEY:\s*(.*?)\]', clean_input)
+            if match:
+                suggestion_key = match.group(1)
+                
+            display_input = re.sub(r'\s*\[SUGGESTION_KEY:.*$', '', clean_input).strip()
+            display_input = re.sub(r'\s*\[CACHED_QUERY:.*$', '', display_input).strip()
             
-            # Store the clean display version (without cache tag) in chat history
+            # Store the clean display version in chat history
             st.session_state.messages.append({"role": "user", "content": display_input})
             
             with chat_container:
@@ -1049,11 +1228,44 @@ if should_run and user_input:
                 </div>
                 ''', unsafe_allow_html=True)
             
-            with chat_container.chat_message("assistant", avatar="✨"):
-                # 1. Initialize generator (send FULL input with cache tag to Agent)
-                gen = st.session_state.agent.chat_stream(clean_input)
+            # INTERCEPT FOR QUICK SUGGESTIONS (Zero TTFT Tool Bypassing)
+            auto_tool_name = None
+            auto_tool_args = None
+            auto_tool_result = None
+            
+            if suggestion_key and suggestion_key in SUGGESTION_MAP:
+                from src.ai.tools import search_perfumes, recommend_similar, compare_perfumes
+                item = SUGGESTION_MAP[suggestion_key]
                 
-                # 2. Wait for first chunk with Spinner (This covers Tool Execution time)
+                # Prepare filters based on Agent's active state (proper ChromaDB format)
+                g_list = []
+                if hasattr(st.session_state.agent, 'gender_filter') and st.session_state.agent.gender_filter:
+                    g_list = st.session_state.agent.gender_filter
+                filters = build_gender_chromadb_filter(g_list)
+                
+                if isinstance(item, list):
+                    auto_tool_name = "compare_perfumes"
+                    auto_tool_args = {"names": tuple(item)}
+                    auto_tool_result = compare_perfumes(item)
+                elif suggestion_key.startswith("🧬"):
+                    auto_tool_name = "recommend_similar"
+                    auto_tool_args = {"names": [item], "add_query": None, "filters": filters}
+                    auto_tool_result = recommend_similar(reference_perfume_names=[item], filters=filters)
+                else:
+                    auto_tool_name = "search_perfumes"
+                    auto_tool_args = {"query": item, "filters": filters, "sort_by": None, "excluded_notes": None}
+                    auto_tool_result = search_perfumes(query=item, filters=filters)
+            
+            with chat_container.chat_message("assistant", avatar="✨"):
+                # 1. Initialize generator with bypass parameters if any
+                gen = st.session_state.agent.chat_stream(
+                    clean_input, 
+                    auto_tool_name=auto_tool_name,
+                    auto_tool_args=auto_tool_args,
+                    auto_tool_result=auto_tool_result
+                )
+                
+                # 2. Wait for first chunk with Spinner
                 first_chunk = ""
                 with st.spinner("🔮 Consults the fragrance database..."):
                     try:
@@ -1134,3 +1346,56 @@ st.markdown(f"""
     </span>
 </div>
 """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# SECURE ADMIN LOG PANEL (Hidden behind Secret Key)
+# ---------------------------------------------------------
+admin_key = st.query_params.get("admin")
+stored_password = os.getenv("ADMIN_PASSWORD")
+
+# Only show if the key exists AND matches our secret
+if stored_password and admin_key == stored_password:
+    st.markdown("---")
+    with st.expander("🛠️ Admin Ops - System Telemetry"):
+        from src.ai.tools import _cache
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Static Cache (Quick)", len(_cache.static_cache))
+        with col2:
+            st.metric("Dynamic Cache (Learned)", len(_cache.dynamic_cache))
+            
+        st.write("### 📜 Recent Agent Activity")
+        try:
+            from src.ai.logger import LOG_FILE
+            if os.path.exists(LOG_FILE):
+                with open(LOG_FILE, "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    st.code("".join(lines[-30:]))
+            else:
+                st.info("Log file not found yet.")
+        except Exception as e:
+            st.error(f"Error reading logs: {e}")
+            
+        st.write("### 🧠 Cache Intelligence (Dynamic)")
+        if _cache.dynamic_cache:
+            # Sort by hits to show most valuable entries
+            sorted_cache = sorted(_cache.dynamic_cache.items(), key=lambda x: x[1].get("hits", 0), reverse=True)
+            for key, data in sorted_cache[:10]:
+                st.write(f"- **Hits: {data.get('hits', 1)}** | Last: {data.get('last_accessed', 'N/A')[:16]}")
+        else:
+            st.info("Dynamic cache is currently empty.")
+            
+        st.markdown("---")
+        st.write("### 🔥 Static Cache Management")
+        st.info("Click below to auto-generate results for ALL sidebar suggestions (including gender variants). This will save to quick_cache.json.")
+        if st.button("🚀 Run Full Pre-warm (Static)"):
+            run_prewarm()
+            
+        if st.button("🗑️ Clear Cache Repo"):
+            if os.path.exists(_cache.dynamic_cache_path): os.remove(_cache.dynamic_cache_path)
+            if os.path.exists(_cache.static_cache_path): os.remove(_cache.static_cache_path)
+            _cache.dynamic_cache = {}
+            _cache.static_cache = {}
+            st.success("Caches cleared!")
+            st.rerun()

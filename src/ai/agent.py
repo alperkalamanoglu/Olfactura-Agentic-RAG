@@ -4,6 +4,8 @@ Agent class for orchestrating tool calls with dual-backend support
 """
 import os
 import json
+import uuid
+import re
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -213,7 +215,6 @@ class PerfumeAgent:
         Some vLLM models ignore enable_thinking:False and still leak
         'thought' prefixes or <think>...</think> blocks into responses.
         """
-        import re
         # Remove <think>...</think> blocks (Gemma/Qwen thinking tags)
         text = re.sub(r'<think>.*?</think>\s*', '', text, flags=re.DOTALL)
         # Remove bare 'thought' prefix at the very start (Gemma 4 artifact)
@@ -367,10 +368,11 @@ class PerfumeAgent:
         """Clear conversation history (keep system prompt)"""
         self.conversation_history = [self.conversation_history[0]]
 
-    def chat_stream(self, user_message: str, max_iterations: int = 3):
+    def chat_stream(self, user_message: str, max_iterations: int = 3, auto_tool_name: str = None, auto_tool_args: dict = None, auto_tool_result: str = None):
         """
         Generator for streaming response.
         Tool calls are handled internally (synchronously), then the final response is streamed.
+        Can optionally accept a pre-executed tool result to bypass LLM tool selection.
         
         Yields:
             str: Chunks of the final response content
@@ -380,12 +382,42 @@ class PerfumeAgent:
         # Trim context for token efficiency
         self._trim_context(max_messages=6)
         
-        log_event(agent_logger, "USER_QUERY", user_message[:500])
+        display_msg = re.sub(r'\s*\[SUGGESTION_KEY:.*$', '', user_message).strip()
+        display_msg = re.sub(r'\s*\[CACHED_QUERY:.*$', '', display_msg).strip()
+        
+        log_event(agent_logger, "USER_QUERY", display_msg[:500])
         
         self.conversation_history.append({
             "role": "user",
-            "content": user_message
+            "content": display_msg
         })
+        
+        if auto_tool_name and auto_tool_result is not None:
+            fake_tool_call_id = f"call_{uuid.uuid4().hex[:10]}"
+            safe_args_str = json.dumps(auto_tool_args) if auto_tool_args else "{}"
+            
+            # Inject fake assistant tool call
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{
+                    "id": fake_tool_call_id,
+                    "type": "function",
+                    "function": {
+                        "name": auto_tool_name,
+                        "arguments": safe_args_str
+                    }
+                }]
+            })
+            
+            # Inject fake tool result
+            self.conversation_history.append({
+                "tool_call_id": fake_tool_call_id,
+                "role": "tool",
+                "name": auto_tool_name,
+                "content": str(auto_tool_result)
+            })
+            log_event(agent_logger, "TOOL_INJECT", f"Direct query injected for bypass: {auto_tool_name}")
         
         iterations = 0
         while iterations < max_iterations:
@@ -394,10 +426,11 @@ class PerfumeAgent:
             log_event(agent_logger, "THOUGHT_PROCESS", f"Iteration {iterations}/{max_iterations}")
             
             try:
-                # Build API call parameters (handles Qwen extra_body, tools, streaming automatically)
+                # If we injected a tool, skip tools for the first iteration to force immediate text generation
+                should_include_tools = (iterations == 1) and (not auto_tool_name)
                 kwargs = self._build_kwargs(
                     streaming=True,
-                    include_tools=(iterations == 1)
+                    include_tools=should_include_tools
                 )
                 stream = self.client.chat.completions.create(**kwargs)
             except Exception as e:
@@ -406,7 +439,7 @@ class PerfumeAgent:
                     log_event(agent_logger, "WARNING", f"GPU streaming failed: {e}. Falling back to OpenAI.")
                     self._switch_to_openai()
                     try:
-                        kwargs = self._build_kwargs(streaming=True, include_tools=(iterations == 1))
+                        kwargs = self._build_kwargs(streaming=True, include_tools=should_include_tools)
                         stream = self.client.chat.completions.create(**kwargs)
                     except Exception as e2:
                         log_event(agent_logger, "ERROR", f"OpenAI fallback also failed: {str(e2)}")
@@ -451,7 +484,6 @@ class PerfumeAgent:
                             continue
                         else:
                             # We have enough chars to safely strip it once
-                            import re
                             cleaned = re.sub(r'^\s*thought\s+', '', initial_buffer, flags=re.IGNORECASE)
                             yield cleaned
                             collected_content += cleaned
@@ -484,7 +516,6 @@ class PerfumeAgent:
             
             # Flush any unyielded buffer (if the entire response was < 12 chars)
             if self.use_gpu and not thinking_stripped and initial_buffer:
-                import re
                 cleaned = re.sub(r'^\s*thought\s+', '', initial_buffer, flags=re.IGNORECASE)
                 yield cleaned
                 collected_content += cleaned
